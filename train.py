@@ -1,19 +1,20 @@
 import csv
 
-def estimatePrice(t0, t1, mileage):
-    return t0 + t1 * mileage
+def estimatePrice(t0, t1, mileage, maxMileage, minMileage, maxPrices, minPrices):
+    normailzed = t0 + t1 * (mileage - minMileage) / (maxMileage - minMileage)
+    return normailzed * (maxPrices - minPrices) + minPrices 
 
 def lossFunction(t0, t1, mileages, prices):
     loss = 0.0
     for mileage, price in zip(mileages, prices):
-        loss += (price - estimatePrice(t0, t1, mileage)) ** 2
+        loss += (price - (t0 + t1 * mileage)) ** 2
     return loss / len(mileages)
 
 def gradientDescent(t0, t1, learningRate, loss, mileages, prices):
     s0, s1 = [0.0, 0.0]
     for mileage, price in zip(mileages, prices):
-        s0 += estimatePrice(t0, t1, mileage) - price
-        s1 += (estimatePrice(t0, t1, mileage) - price) * mileage
+        s0 += (t0 + t1 * mileage) - price
+        s1 += ((t0 + t1 * mileage) - price) * mileage
     if loss > lossFunction(t0 - learningRate * s0 / len(mileages), t1 - learningRate * s1 / len(mileages), mileages, prices):
         t0 -= learningRate * s0 / len(mileages)
         t1 -= learningRate * s1 / len(mileages)   
@@ -28,7 +29,6 @@ def train(learningRate, epoch, mileages, prices):
     loss = lossFunction(t0, t1, mileages, prices)
     for _ in range(0, epoch):
         t0, t1, learningRate, loss = gradientDescent(t0, t1, learningRate, loss, mileages, prices) 
-        print(t0, t1, learningRate)
     return t0, t1
  
 def main():
@@ -41,9 +41,18 @@ def main():
             if (row[0] != 'km'):
                 mileages.append(float(row[0]))
                 prices.append(float(row[1]))
+    maxMileage = max(mileages)
+    minMileage = min(mileages)
+    maxPrices = max(prices)
+    minPrices = min(prices)
+    for i in range(0, len(mileages)):
+        mileages[i] = (mileages[i] - minMileage) / (maxMileage - minMileage)
+        prices[i] = (prices[i] - minPrices) / (maxPrices - minPrices)
     t0, t1 = train(learningRate, epoch, mileages, prices)
-    print(t0, t1)
-    print(estimatePrice(t0, t1, 84000.0))
+    with open("thetas.csv", 'w') as file:
+        csvWriter = csv.writer(file)
+        csvWriter.writerow([t0, t1])
+    print (t0, t1)
 
 if __name__ == "__main__":
     main()
