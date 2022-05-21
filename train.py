@@ -1,9 +1,9 @@
 import matplotlib.pyplot as plt
 import csv
 
-def estimatePrice(t0, t1, mileage, maxMileage, minMileage, maxPrices, minPrices):
-    normailzed = t0 + t1 * (mileage - minMileage) / (maxMileage - minMileage)
-    return normailzed * (maxPrices - minPrices) + minPrices 
+def estimatePrice(t0, t1, mileage, param):
+    normailzed = t0 + t1 * (mileage - param[1]) / (param[0] - param[1])
+    return normailzed * (param[2] - param[3]) + param[3]
 
 def lossFunction(t0, t1, mileages, prices):
     loss = 0.0
@@ -36,27 +36,29 @@ def main():
     learningRate, epoch = [0.4, 1000]
     mileages = []
     prices = []
+    # file
     with open('data.csv', 'r', encoding='utf-8') as file:
         csvReader = csv.reader(file)
         for row in csvReader:
             if (row[0] != 'km'):
                 mileages.append(float(row[0]))
                 prices.append(float(row[1]))
-
+    # figure 1
     plt.figure(1)
-    plt.scatter(mileages, prices)
-
-    maxMileage, minMileage = max(mileages), min(mileages)
-    maxPrices, minPrices = max(prices), min(prices)
+    plt.scatter(mileages, prices, s=10, c='green')
+    # param
+    param = [max(mileages), min(mileages), max(prices), min(prices)]
     for i in range(0, len(mileages)):
-        mileages[i] = (mileages[i] - minMileage) / (maxMileage - minMileage)
-        prices[i] = (prices[i] - minPrices) / (maxPrices - minPrices)
+        mileages[i] = (mileages[i] - param[1]) / (param[0] - param[1])
+        prices[i] = (prices[i] - param[3]) / (param[2] - param[3])
+    # train
     t0, t1 = train(learningRate, epoch, mileages, prices)
+    # save result to file 'thetas.csv'
     with open("thetas.csv", 'w') as file:
         csvWriter = csv.writer(file)
         csvWriter.writerow([t0, t1])
-
-    plt.plot([minMileage, maxMileage], [estimatePrice(t0, t1, minMileage, maxMileage, minMileage, maxPrices, minPrices), estimatePrice(t0, t1, maxMileage, maxMileage, minMileage, maxPrices, minPrices)])
+    # draw
+    plt.plot([param[1], param[0]], [estimatePrice(t0, t1, param[1], param), estimatePrice(t0, t1, param[0], param)], c='red')
     plt.show()
 
 if __name__ == "__main__":
