@@ -45,6 +45,8 @@ def main():
                 prices.append(float(row[1]))
     # figure 1
     plt.figure(1)
+    plt.xlabel('mileage')
+    plt.ylabel('price')
     plt.scatter(mileages, prices, s=10, c='green')
     # param
     param = [max(mileages), min(mileages), max(prices), min(prices)]
