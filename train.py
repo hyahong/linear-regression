@@ -1,4 +1,6 @@
 import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import axes3d
+import numpy as np
 import csv
 
 def estimatePrice(t0, t1, mileage, param):
@@ -32,6 +34,20 @@ def train(learningRate, epoch, mileages, prices):
         t0, t1, learningRate, loss = gradientDescent(t0, t1, learningRate, loss, mileages, prices) 
     return t0, t1
  
+def drawLoss(mileages, prices):
+    fig = plt.figure(2)
+    X, Y = np.meshgrid(np.linspace(-2,2,100), np.linspace(-2,2,100))
+    Z = (prices[0] - (X + Y * mileages[0])) ** 2
+    for mileage, price in zip(mileages, prices):
+        Z += (price - (X + Y * mileage)) ** 2
+    Z -= (prices[0] - (X + Y * mileages[0])) ** 2
+    ax = plt.axes(projection='3d')
+    ax.plot_surface(X, Y, Z, cmap='plasma')
+    ax.set_zlim(0, 150)
+    ax.set_xlabel('t0')
+    ax.set_ylabel('t1')
+    ax.set_zlabel('cost')
+
 def main():
     learningRate, epoch = [0.4, 1000]
     mileages = []
@@ -61,6 +77,8 @@ def main():
         csvWriter.writerow([t0, t1])
     # draw
     plt.plot([param[1], param[0]], [estimatePrice(t0, t1, param[1], param), estimatePrice(t0, t1, param[0], param)], c='red')
+    drawLoss(mileages, prices)
+    plt.tight_layout()
     plt.show()
 
 if __name__ == "__main__":
