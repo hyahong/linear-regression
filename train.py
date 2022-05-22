@@ -2,6 +2,7 @@ import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import axes3d
 import numpy as np
 import csv
+from estimate import estimatePrice
 
 def estimatePrice(t0, t1, mileage, param):
     normailzed = t0 + t1 * (mileage - param[1]) / (param[0] - param[1])
@@ -20,38 +21,49 @@ def gradientDescent(t0, t1, learningRate, loss, mileages, prices):
         s1 += ((t0 + t1 * mileage) - price) * mileage
     if loss > lossFunction(t0 - learningRate * s0 / len(mileages), t1 - learningRate * s1 / len(mileages), mileages, prices):
         t0 -= learningRate * s0 / len(mileages)
-        t1 -= learningRate * s1 / len(mileages)   
-        loss = lossFunction(t0, t1, mileages, prices)
+        t1 -= learningRate * s1 / len(mileages)
+        loss = lossFunction(t0, t1, mileages, prices) 
         learningRate *= 1.04
     else:
         learningRate *= 0.6
     return t0, t1, learningRate, loss
 
-def train(learningRate, epoch, mileages, prices):
+def train(learningRate, epoch, mileages, prices, t0History, t1History):
     t0, t1 = [0.0, 0.0]
     loss = lossFunction(t0, t1, mileages, prices)
-    for _ in range(0, epoch):
+    for i in range(0, epoch):
         t0, t1, learningRate, loss = gradientDescent(t0, t1, learningRate, loss, mileages, prices) 
+        if i % 10 == 0:
+            t0History.append(t0)
+            t1History.append(t1)
     return t0, t1
  
-def drawLoss(mileages, prices):
-    fig = plt.figure(2)
-    X, Y = np.meshgrid(np.linspace(-2,2,100), np.linspace(-2,2,100))
+def drawLoss(mileages, prices, t0History, t1History):
+    plt.figure(2)
+    X, Y = np.meshgrid(np.linspace(-0.2, 1.5, 100), np.linspace(-1.6, 0.4, 100))
     Z = (prices[0] - (X + Y * mileages[0])) ** 2
     for mileage, price in zip(mileages, prices):
         Z += (price - (X + Y * mileage)) ** 2
     Z -= (prices[0] - (X + Y * mileages[0])) ** 2
+    Z /= len(mileages)
     ax = plt.axes(projection='3d')
-    ax.plot_surface(X, Y, Z, cmap='plasma')
-    ax.set_zlim(0, 150)
+    ax.plot_surface(X, Y, Z, cmap='viridis', alpha=0.9)
+    cost = []
+    for t0, t1 in zip(t0History, t1History):
+        ax.scatter(t0, t1, lossFunction(t0, t1, mileages, prices), c='red')
+        cost.append(lossFunction(t0, t1, mileages, prices))
+    ax.plot(t0History, t1History, cost, c='red')
+    ax.set_zlim(0, 0.5)
     ax.set_xlabel('t0')
     ax.set_ylabel('t1')
     ax.set_zlabel('cost')
 
 def main():
-    learningRate, epoch = [0.4, 1000]
+    learningRate, epoch = [0.4, 500]
     mileages = []
     prices = []
+    t0History = [0.0]
+    t1History = [0.0]
     # file
     with open('data.csv', 'r', encoding='utf-8') as file:
         csvReader = csv.reader(file)
@@ -70,14 +82,16 @@ def main():
         mileages[i] = (mileages[i] - param[1]) / (param[0] - param[1])
         prices[i] = (prices[i] - param[3]) / (param[2] - param[3])
     # train
-    t0, t1 = train(learningRate, epoch, mileages, prices)
+    t0, t1 = train(learningRate, epoch, mileages, prices, t0History, t1History)
+    print('loss: ', lossFunction(t0, t1, mileages, prices))
+    print('t0:', t0, '   t1:', t1)
     # save result to file 'thetas.csv'
     with open("thetas.csv", 'w') as file:
         csvWriter = csv.writer(file)
         csvWriter.writerow([t0, t1])
     # draw
     plt.plot([param[1], param[0]], [estimatePrice(t0, t1, param[1], param), estimatePrice(t0, t1, param[0], param)], c='red')
-    drawLoss(mileages, prices)
+    drawLoss(mileages, prices, t0History, t1History)
     plt.tight_layout()
     plt.show()
 

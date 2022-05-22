@@ -1,8 +1,8 @@
 import csv
 
-def estimatePrice(t0, t1, mileage, maxMileage, minMileage, maxPrices, minPrices):
-    normailzed = t0 + t1 * (mileage - minMileage) / (maxMileage - minMileage)
-    return normailzed * (maxPrices - minPrices) + minPrices 
+def estimatePrice(t0, t1, mileage, param):
+    normailzed = t0 + t1 * (mileage - param[1]) / (param[0] - param[1])
+    return normailzed * (param[2] - param[3]) + param[3]
 
 def main():
     t0, t1 = [0.0, 0.0]
@@ -31,7 +31,8 @@ def main():
             print("invalid input.")
         except:
             print("invalid input.")
-    print("estimated price:", estimatePrice(t0, t1, mileage, max(mileages), min(mileages), max(prices), min(prices)))
+    param = [max(mileages), min(mileages), max(prices), min(prices)]
+    print("estimated price:", estimatePrice(t0, t1, mileage, param))
 
 if __name__ == '__main__':
     main()
