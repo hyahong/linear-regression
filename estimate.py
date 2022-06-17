@@ -1,6 +1,8 @@
 import csv
 
 def estimatePrice(t0, t1, mileage, param):
+    if t0 == 0 and t1 == 0:
+        return 0
     normailzed = t0 + t1 * (mileage - param[1]) / (param[0] - param[1])
     return normailzed * (param[2] - param[3]) + param[3]
 
