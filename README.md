@@ -1,6 +1,6 @@
 # linear regression
 
-A simple car mileage-price linear regression model.
+A simple car mileage-price linear regression model. This model was implemented without a library.
 
 ### train
 
